@@ -9,24 +9,54 @@ author:
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## GitHub Documents
+# Salmon Quantification
+ This code describes the methods used to quantify transcipts using the pseudoaligner Salmon. 
 
-This is an R Markdown format used for publishing markdown documents to GitHub. When you click the **Knit** button all R code chunks are run and a markdown file (.md) suitable for publishing to GitHub is generated.
+## Install Salmon
+We use the Herper package to install salmon into a miniconda environment. 
 
-## Including Code
+```{r}
+library(Herper)
+salmon_paths <- install_CondaTools(tools = "salmon", env = "RNAseq_analysis")
+salmon_paths
 
-You can include R code in the document as follows:
-
-```{r cars}
-summary(cars)
 ```
 
-## Including Plots
+## Build Salmon Index
+We will build the salmon index using the reference information from Bioconductor packages: BSgenome and TxDb.
 
-You can also embed plots, for example:
+```{r}
+library(BSgenome.Mmusculus.UCSC.mm10)
+library(TxDb.Mmusculus.UCSC.mm10.knownGene)
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+allTxSeq <- extractTranscriptSeqs(BSgenome.Mmusculus.UCSC.mm10, TxDb.Mmusculus.UCSC.mm10.knownGene,
+    use.names = TRUE)
+writeXStringSet(allTxSeq, "mm10Trans.fa")
+
+fastaTx <- "mm10Trans.fa"
+indexName <- "mm10Trans"
+with_CondaEnv("RNAseq_analysis",
+                        system2(command="salmon",
+                        args = c("index",
+                        "-i", indexName,
+                        "-t", fastaTx),
+                        stdout = TRUE))
+
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+## Quantify transcipt abundance
+
+```{r}
+
+fq <- "GSM5291545_CB_CreNeg_input_R2.fastq.gz"
+outDir <- "GSM5291545_CB_CreNeg_input_R2"
+
+with_CondaEnv("RNAseq_analysis",
+                      system2(command="salmon", args = c("quant",
+                        "-i", indexName,
+                        "-o", outDir,
+                        "-l A",
+                        "-r", fq),
+                        stdout = TRUE))
+
+```
