@@ -45,7 +45,7 @@ with_CondaEnv("RNAseq_analysis",
 ```
 
 ## Quantify transcipt abundance
-Finally we will use the slamon *quant* command to quantify the transcript abundance for our every transcript. 
+Finally we will use the salmon *quant* command to quantify the transcript abundance for our every transcript. 
 
 ```{r}
 
